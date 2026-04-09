@@ -22,7 +22,7 @@
             font-family: 'Inter', sans-serif;
             background-color: #020617;
             margin: 0;
-            overflow: hidden;
+            overflow: hidden; /* Evita scrolls fantasma */
         }
 
         /* Pantalla de carga */
@@ -46,24 +46,31 @@
             100% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.15)); }
         }
 
-        /* Fondo Parallax */
+        /* Fondo Parallax - VERSIÓN A PRUEBA DE FALLOS (Viewport units y Fixed) */
         .parallax-bg {
-            position: absolute;
-            top: -5%; left: -5%;
-            width: 110%; height: 110%;
+            position: fixed; /* Se ancla a la pantalla, no a los contenedores */
+            top: -10%; 
+            left: -10%;
+            width: 120vw; /* 120% del ancho de la pantalla (mucho margen de seguridad) */
+            height: 120vh; /* 120% del alto de la pantalla */
             background-image: url('https://i.ibb.co/9kpPs8Sx/FONFO-LEADS2.webp');
             background-size: cover;
             background-position: center;
-            transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             z-index: -2;
+            pointer-events: none; /* Evita interferencia del ratón */
+            will-change: transform; /* Optimiza para la tarjeta de video */
+            transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
-        /* Overlay Full-Screen con oscurecimiento profundo para realzar el centro */
+        /* Overlay Full-Screen */
         .overlay {
-            position: absolute;
+            position: fixed;
             inset: 0;
+            width: 100vw;
+            height: 100vh;
             background: radial-gradient(circle at center, rgba(15, 23, 42, 0.7) 0%, rgba(2, 6, 23, 0.98) 100%);
             z-index: -1;
+            pointer-events: none;
         }
 
         /* Botones Tecnológicos Flotantes y Sobrios */
@@ -127,6 +134,10 @@
         <p class="mt-4 text-slate-400 text-sm max-w-xs mx-auto">Por favor, acceda a este sistema desde una computadora de escritorio.</p>
     </div>
 
+    <!-- FONDOS Y EFECTOS INDEPENDIENTES (Fuera del contenedor para evitar bugs de flexbox) -->
+    <div class="parallax-bg hidden md:block" id="bg-layer"></div>
+    <div class="overlay hidden md:block"></div>
+
     <!-- 2. APLICACIÓN DE ESCRITORIO (>= 768px) -->
     <!-- Contenedor maestro con padding estricto para forzar márgenes -->
     <div class="relative w-full h-screen hidden md:flex items-center justify-center p-8 lg:p-16">
@@ -135,10 +146,6 @@
         <div id="loader">
             <img src="https://i.ibb.co/rRSQzDmq/logo-qr.png" alt="Cargando..." class="w-24 pulse-logo">
         </div>
-
-        <!-- FONDOS Y EFECTOS -->
-        <div class="parallax-bg" id="bg-layer"></div>
-        <div class="overlay"></div>
 
         <!-- CONTENIDO CENTRAL PERFECTAMENTE AGRUPADO -->
         <!-- max-w-2xl asegura que nunca se expanda demasiado a lo ancho -->
@@ -210,7 +217,7 @@
             }, 500);
         });
 
-        // Parallax sutil
+        // Parallax solucionado con translate3d (Hardware Acceleration)
         document.addEventListener('mousemove', (e) => {
             if (window.innerWidth < 768) return; 
 
@@ -220,15 +227,16 @@
             const bgLayer = document.getElementById('bg-layer');
             const contentLayer = document.getElementById('content-layer');
 
-            bgLayer.style.transform = `translate(${xAxis}px, ${yAxis}px) scale(1.05)`;
-            contentLayer.style.transform = `translate(${xAxis * -0.15}px, ${yAxis * -0.15}px)`;
+            // translate3d evita el tearing (desgarro visual) forzando el uso de la GPU
+            bgLayer.style.transform = `translate3d(${xAxis}px, ${yAxis}px, 0)`;
+            contentLayer.style.transform = `translate3d(${xAxis * -0.15}px, ${yAxis * -0.15}px, 0)`;
         });
 
         document.addEventListener('mouseleave', () => {
             const bgLayer = document.getElementById('bg-layer');
             const contentLayer = document.getElementById('content-layer');
-            bgLayer.style.transform = `translate(0px, 0px) scale(1.05)`;
-            contentLayer.style.transform = `translate(0px, 0px)`;
+            bgLayer.style.transform = `translate3d(0px, 0px, 0)`;
+            contentLayer.style.transform = `translate3d(0px, 0px, 0)`;
         });
     </script>
 </body>
